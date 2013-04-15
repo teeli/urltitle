@@ -6,8 +6,10 @@
 # Detects URL from IRC channels and prints out the title
 #
 # Version Log:
+# 0.03b    Some formatting
 # 0.03     HTTPS support
-# 0.02     Updated version by teel. Added support for redirects, trimmed titles (remove extra whitespaces), some optimization
+# 0.02     Updated version by teel. Added support for redirects, trimmed titles (remove extra whitespaces), 
+#          some optimization
 # 0.01a    Original version by rosc
 #
 ################################################################################################################
@@ -25,9 +27,6 @@
 # 2) .chanset #channelname +urltitle        ;# enable script
 # 3) .chanset #channelname +logurltitle     ;# enable logging
 # Then just input a url in channel and the script will retrieve the title from the corresponding page.
-#
-# When reporting bugs, PLEASE include the .set errorInfo debug info! 
-# Read here: http://forum.egghelp.org/viewtopic.php?t=10215
 #
 ################################################################################################################
 
@@ -47,7 +46,7 @@ namespace eval UrlTitle {
   setudef flag logurltitle            ;# Channel flag to enable logging of script.
 
   set last 1                ;# Internal variable, stores time of last eggdrop use, don't change..
-  set scriptVersion 0.02
+  set scriptVersion 0.03b
 
   proc handler {nick host user chan text} {
     variable delay
@@ -57,7 +56,8 @@ namespace eval UrlTitle {
     set unixtime [clock seconds]
     if {[channel get $chan urltitle] && ($unixtime - $delay) > $last && (![matchattr $user $ignore])} {
       foreach word [split $text] {
-        if {[string length $word] >= $length && [regexp {^(f|ht)tp(s|)://} $word] && ![regexp {://([^/:]*:([^/]*@|\d+(/|$))|.*/\.)} $word]} {
+        if {[string length $word] >= $length && [regexp {^(f|ht)tp(s|)://} $word] && \
+            ![regexp {://([^/:]*:([^/]*@|\d+(/|$))|.*/\.)} $word]} {
           set last $unixtime
           set urtitle [UrlTitle::parse $word]
           if {[string length $urtitle]} {
