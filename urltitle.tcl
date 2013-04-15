@@ -6,6 +6,7 @@
 # Detects URL from IRC channels and prints out the title
 #
 # Version Log:
+# 0.03c    HTTPS support is now optional and will be automatically dropeed if TCL TSL package does not exist
 # 0.03b    Some formatting
 # 0.03     HTTPS support
 # 0.02     Updated version by teel. Added support for redirects, trimmed titles (remove extra whitespaces), 
@@ -31,9 +32,6 @@
 ################################################################################################################
 
 namespace eval UrlTitle {
-  package require http                ;# You need the http package..
-  package require tls
-
   # CONFIG
   set ignore "bdkqr|dkqr"   ;# User flags script will ignore input from
   set length 5              ;# minimum url length to trigger channel eggdrop use
@@ -45,10 +43,22 @@ namespace eval UrlTitle {
   setudef flag urltitle               ;# Channel flag to enable script.
   setudef flag logurltitle            ;# Channel flag to enable logging of script.
 
+  # INTERNAL
   set last 1                ;# Internal variable, stores time of last eggdrop use, don't change..
-  set scriptVersion 0.03b
+  set scriptVersion 0.03c
+
+  # PACKAGES
+  package require http                ;# You need the http package..
+  if {[catch {package require tls}]} {
+    putlog "Url Title Grabber HTTPS support failed"
+    set httpsSupport false
+  } else {
+    putlog "Url Title Grabber HTTPS support enabled"
+    set httpsSupport true
+  }
 
   proc handler {nick host user chan text} {
+    variable httpsSupport
     variable delay
     variable last
     variable ignore
@@ -59,7 +69,16 @@ namespace eval UrlTitle {
         if {[string length $word] >= $length && [regexp {^(f|ht)tp(s|)://} $word] && \
             ![regexp {://([^/:]*:([^/]*@|\d+(/|$))|.*/\.)} $word]} {
           set last $unixtime
+          # enable https if supported
+          if {$httpsSupport} {
+            putlog "Url grabber HTTPS support is currently enabled"
+            ::http::register https 443 ::tls::socket
+          }
           set urtitle [UrlTitle::parse $word]
+          # unregister https if supported
+          if {$httpsSupport} {
+            ::http::unregister https
+          }
           if {[string length $urtitle]} {
             putserv "PRIVMSG $chan :Title: $urtitle"
           }
@@ -74,7 +93,6 @@ namespace eval UrlTitle {
   proc parse {url} {
     variable timeout
     set title ""
-    ::http::register https 443 ::tls::socket
     if {[info exists url] && [string length $url]} {
       if {[catch {set http [::http::geturl $url -timeout $timeout]} results]} {
         putlog "Connection to $url failed"
@@ -90,7 +108,7 @@ namespace eval UrlTitle {
             }
             "HTTP\/[0-1]\.[0-1].3.*" {
               regexp -nocase {Location\s(http[^\s]+)} $meta match location
-              set title [UrlTitle::parse $location]
+              catch {set title [UrlTitle::parse $location]} error
             }
           }
         } else {
@@ -99,9 +117,8 @@ namespace eval UrlTitle {
         ::http::cleanup $http
       }
     }
-    ::http::unregister https
     return $title
   }
 
-  putlog "Initialize Url Title Grabber v$scriptVersion"
+  putlog "Initialized Url Title Grabber v$scriptVersion"
 }

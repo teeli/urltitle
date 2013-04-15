@@ -125,11 +125,14 @@ proc dcc {cmd {value ""}} {
 source $scriptname
 
 # TESTS GO HERE
-pubm "https://github.com/teeli/urltitle"
-#pubm "http://imgur.com/a/2lt4r"
-#after 2000
-#pubm "http://www.google.com"
-#after 2000
-#pubm "http://youtu.be/C3ee6u5IbGE"
-#after 2000
-#pubm "http://www.thisdoesnotexistsatall.com"
+pubm "Check it out at https://github.com/teeli/urltitle"
+after 2000
+pubm "This is http://www.google.com is in the middle of the sentence"
+after 20000
+pubm "http://imgur.com/a/2lt4r"
+after 2000
+pubm "http://www.google.com"
+after 2000
+pubm "http://youtu.be/C3ee6u5IbGE"
+after 2000
+pubm "http://www.thisdoesnotexistsatall.com"
