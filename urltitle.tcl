@@ -71,7 +71,6 @@ namespace eval UrlTitle {
           set last $unixtime
           # enable https if supported
           if {$httpsSupport} {
-            putlog "Url grabber HTTPS support is currently enabled"
             ::http::register https 443 ::tls::socket
           }
           set urtitle [UrlTitle::parse $word]
