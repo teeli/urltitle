@@ -125,11 +125,11 @@ proc dcc {cmd {value ""}} {
 source $scriptname
 
 # TESTS GO HERE
-pubm "http://imgur.com/a/2lt4r"
-after 2000
-pubm "http://www.google.com"
-after 2000
-pubm "http://youtu.be/C3ee6u5IbGE"
-after 2000
-pubm "http://www.thisdoesnotexistsatall.com"
-
+pubm "https://github.com/teeli/urltitle"
+#pubm "http://imgur.com/a/2lt4r"
+#after 2000
+#pubm "http://www.google.com"
+#after 2000
+#pubm "http://youtu.be/C3ee6u5IbGE"
+#after 2000
+#pubm "http://www.thisdoesnotexistsatall.com"

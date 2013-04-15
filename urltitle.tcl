@@ -1,9 +1,12 @@
 # Script to grab titles from webpages
 # Updated version by teel @ IRCnet
 #
+# https://github.com/teeli/urltitle
+#
 # Detects URL from IRC channels and prints out the title
 #
 # Version Log:
+# 0.03     HTTPS support
 # 0.02     Updated version by teel. Added support for redirects, trimmed titles (remove extra whitespaces), some optimization
 # 0.01a    Original version by rosc
 #
@@ -30,6 +33,7 @@
 
 namespace eval UrlTitle {
   package require http                ;# You need the http package..
+  package require tls
 
   # CONFIG
   set ignore "bdkqr|dkqr"   ;# User flags script will ignore input from
@@ -70,6 +74,7 @@ namespace eval UrlTitle {
   proc parse {url} {
     variable timeout
     set title ""
+    ::http::register https 443 ::tls::socket
     if {[info exists url] && [string length $url]} {
       if {[catch {set http [::http::geturl $url -timeout $timeout]} results]} {
         putlog "Connection to $url failed"
@@ -88,12 +93,13 @@ namespace eval UrlTitle {
               set title [UrlTitle::parse $location]
             }
           }
-          ::http::cleanup $http
         } else {
           putlog "Connection to $url failed"
         }
+        ::http::cleanup $http
       }
     }
+    ::http::unregister https
     return $title
   }
 
