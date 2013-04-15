@@ -6,6 +6,7 @@
 # Detects URL from IRC channels and prints out the title
 #
 # Version Log:
+# 0.04     HTML parsing for titles added
 # 0.03c    HTTPS support is now optional and will be automatically dropeed if TCL TSL package does not exist
 # 0.03b    Some formatting
 # 0.03     HTTPS support
@@ -50,15 +51,19 @@ namespace eval UrlTitle {
   # PACKAGES
   package require http                ;# You need the http package..
   if {[catch {package require tls}]} {
-    putlog "Url Title Grabber HTTPS support failed"
     set httpsSupport false
   } else {
-    putlog "Url Title Grabber HTTPS support enabled"
     set httpsSupport true
+  }
+  if {[catch {package require htmlparse}]} {
+    set htmlSupport false
+  } else {
+    set htmlSupport true
   }
 
   proc handler {nick host user chan text} {
     variable httpsSupport
+    variable htmlSupport
     variable delay
     variable last
     variable ignore
@@ -74,6 +79,9 @@ namespace eval UrlTitle {
             ::http::register https 443 ::tls::socket
           }
           set urtitle [UrlTitle::parse $word]
+          if {$htmlSupport} {
+            set urtitle [::htmlparse::mapEscapes $urtitle]
+          }
           # unregister https if supported
           if {$httpsSupport} {
             ::http::unregister https
