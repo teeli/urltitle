@@ -111,7 +111,7 @@ namespace eval UrlTitle {
           switch -regexp -- $status {
             "HTTP.*200.*" {
               regexp -nocase {<title>(.*?)</title>} $data match title
-              set title [string trim $title]
+              set title [regsub -all -nocase {\s+} $title " "]
             }
             "HTTP\/[0-1]\.[0-1].3.*" {
               regexp -nocase {Location\s(http[^\s]+)} $meta match location
