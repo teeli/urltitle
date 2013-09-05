@@ -1,5 +1,6 @@
 # Script to grab titles from webpages
 # Updated version by teel @ IRCnet
+# Even more updated by T-101 @ ircnet
 #
 # https://github.com/teeli/urltitle
 #
@@ -38,6 +39,7 @@ namespace eval UrlTitle {
   set length 5              ;# minimum url length to trigger channel eggdrop use
   set delay 1               ;# minimum seconds to wait before another eggdrop use
   set timeout 5000          ;# geturl timeout (1/1000ths of a second)
+  set disabledfiletypes { jpg gif mov mp4 avi mp3 pdf swf mp2 jpeg mpeg }       ;# filetypes that will not be looked at all
 
   # BINDS
   bind pubm "-|-" {*://*} UrlTitle::handler
@@ -68,11 +70,15 @@ namespace eval UrlTitle {
     variable last
     variable ignore
     variable length
+    variable disabledfiletypes
     set unixtime [clock seconds]
     if {[channel get $chan urltitle] && ($unixtime - $delay) > $last && (![matchattr $user $ignore])} {
       foreach word [split $text] {
         if {[string length $word] >= $length && [regexp {^(f|ht)tp(s|)://} $word] && \
             ![regexp {://([^/:]*:([^/]*@|\d+(/|$))|.*/\.)} $word]} {
+
+	foreach filetype $disabledfiletypes { if {[lindex [split $word .] end] == $filetype} {return 1} }
+
           set last $unixtime
           # enable https if supported
           if {$httpsSupport} {
@@ -87,7 +93,7 @@ namespace eval UrlTitle {
             ::http::unregister https
           }
           if {[string length $urtitle]} {
-            putserv "PRIVMSG $chan :Title: $urtitle"
+		putserv "PRIVMSG $chan :\002\[URL\]\002 $urtitle"
           }
           break
         }
