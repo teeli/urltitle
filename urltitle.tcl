@@ -110,7 +110,7 @@ namespace eval UrlTitle {
           set meta [::http::meta $http]
           switch -regexp -- $status {
             "HTTP.*200.*" {
-              regexp -nocase {<title>(.*?)</title>} $data match title
+              regexp -nocase {<title.*>(.*?)</title>} $data match title
               set title [regsub -all -nocase {\s+} $title " "]
             }
             "HTTP\/[0-1]\.[0-1].3.*" {
