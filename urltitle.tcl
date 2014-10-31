@@ -7,6 +7,7 @@
 # Detects URL from IRC channels and prints out the title
 #
 # Version Log:
+# 0.06     T-101: added output conversion to utf-8 to combat special characters
 # 0.05     T-101: added filetypes to ignore, added mapping to convert some nasty umlauts/utf to more irc-friendly
 # 0.04     HTML parsing for titles added
 # 0.03c    HTTPS support is now optional and will be automatically dropeed if TCL TSL package does not exist
@@ -40,7 +41,7 @@ namespace eval UrlTitle {
   set length 5              ;# minimum url length to trigger channel eggdrop use
   set delay 1               ;# minimum seconds to wait before another eggdrop use
   set timeout 5000          ;# geturl timeout (1/1000ths of a second)
-  set disabledfiletypes { jpg gif png txt mov mp4 avi mp3 pdf swf mp2 jpeg mpeg }       ;# filetypes that will not be looked at all
+  set disabledfiletypes { jpg gif png txt mov mp4 avi mp3 pdf swf mp2 jpeg mpeg zip 7z arj arc rar lha }       ;# filetypes that will not be looked at all
 
   # BINDS
   bind pubm "-|-" {*://*} UrlTitle::handler
@@ -49,7 +50,7 @@ namespace eval UrlTitle {
 
   # INTERNAL
   set last 1                ;# Internal variable, stores time of last eggdrop use, don't change..
-  set scriptVersion 0.05
+  set scriptVersion 0.06
 
   # PACKAGES
   package require http                ;# You need the http package..
@@ -87,8 +88,9 @@ namespace eval UrlTitle {
     &ograve; \xF2 &oacute; \xF3 &ocirc; \xF4 &otilde; \xF5 &ouml; \xF6
     &divide; \xF7 &oslash; \xF8 &ugrave; \xF9 &uacute; \xFA &ucirc; \xFB
     &uuml; \xFC &yacute; \xFD &thorn; \xFE &yuml; \xFF 
-    &\#8211; \x2D &\#8212; \x2D “ \x22 ” \x2 &#8217; \x27 &\#8221; \x22 &rdquo; \x
+    &\#8211; \x2D &\#8212; \x2D “ \x22 ” \x2 &\#8217; \x27 &\#8221; \x22 &rdquo; \x
     &\#214; \xD6 &\#Ouml; \xD6 Ö \xD6 &\#246; \xF6 &\#ouml; \xF6 ö \xF6
+    \x8211 \x2D \x2D ’
 }
 
   proc handler {nick host user chan text} {
@@ -121,7 +123,7 @@ namespace eval UrlTitle {
             ::http::unregister https
           }
           if {[string length $urtitle]} {
-		putserv "PRIVMSG $chan :\002\[URL\]\002 $urtitle"
+		putserv "PRIVMSG $chan :\002\[URL\]\002 [encoding convertto utf-8 $urtitle]"
           }
           break
         }
@@ -155,7 +157,7 @@ namespace eval UrlTitle {
             }
           }
         } else {
-          putlog "Connection to $url failed"
+#          putlog "Connection to $url failed"
         }
         ::http::cleanup $http
       }
