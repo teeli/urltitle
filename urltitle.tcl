@@ -76,7 +76,7 @@ namespace eval UrlTitle {
           set last $unixtime
           # enable https if supported
           if {$httpsSupport} {
-            ::http::register https 443 ::tls::socket
+            ::http::register https 443 [list ::tls::socket -tls1 1]
           }
           set urtitle [UrlTitle::parse $word]
           if {$htmlSupport} {
