@@ -1,4 +1,4 @@
-#!/usr/bin/tclsh
+#!/usr/bin/env tclsh
 ###############################################################
 # 
 # Test script for eggdrop scripts
