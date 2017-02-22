@@ -80,7 +80,7 @@ namespace eval UrlTitle {
 
     if {[package vcompare $tlsVersion 1.7.11] >= 0} {
       # tls version 1.7.11 should support autoservername
-      ::tls::socket -autoservername {*}$opts $host $port
+      ::tls::socket -autoservername true {*}$opts $host $port
     } elseif {[package vcompare $tlsVersion 1.6.7] >= 0} {
       # From version 1.6.7, it shouldn't be necessary to specify any ciphers.
       ::tls::socket -servername $host {*}$opts $host $port
