@@ -6,6 +6,7 @@
 # Detects URL from IRC channels and prints out the title
 #
 # Version Log:
+# 0.06     Added XPATH support to title parsing (only if tdom package is available)
 # 0.05     Added SNI support for TLS (with TLS version check)
 # 0.04     HTML parsing for titles added
 # 0.03c    HTTPS support is now optional and will be automatically dropeed if TCL TSL package does not exist
@@ -47,7 +48,7 @@ namespace eval UrlTitle {
 
   # INTERNAL
   set last 1                ;# Internal variable, stores time of last eggdrop use, don't change..
-  set scriptVersion 0.05
+  set scriptVersion 0.06
 
   # PACKAGES
   package require http                ;# You need the http package..
@@ -63,6 +64,11 @@ namespace eval UrlTitle {
     set htmlSupport false
   } else {
     set htmlSupport true
+  }
+  if {[catch {package require tdom}]} {
+    set tdomSupport false
+  } else {
+    set tdomSupport true
   }
 
   # Enable SNI support for TLS if suitable TLS version is installed
@@ -124,6 +130,7 @@ namespace eval UrlTitle {
 
   proc parse {url} {
     variable timeout
+    variable tdomSupport
     set title ""
     if {[info exists url] && [string length $url]} {
       if {[catch {set http [::http::geturl $url -timeout $timeout]} results]} {
@@ -135,8 +142,16 @@ namespace eval UrlTitle {
           set meta [::http::meta $http]
           switch -regexp -- $status {
             "HTTP.*200.*" {
-              regexp -nocase {<title.*>(.*?)</title>} $data match title
-              set title [regsub -all -nocase {\s+} $title " "]
+              if {$tdomSupport} {
+                # use XPATH if tdom is supported
+                set doc [dom parse -html $data]
+                set root [$doc documentElement]
+                set title [[$root selectNodes {//head/title/text()}] data]
+              } else {
+                # fallback to regex parsing (eww)
+                regexp -nocase {<title.*>(.*?)</title>} $data match title
+                set title [regsub -all -nocase {\s+} $title " "]
+              }
             }
             "HTTP\/[0-1]\.[0-1].3.*" {
               regexp -nocase {Location\s(http[^\s]+)} $meta match location
