@@ -6,6 +6,7 @@
 # Detects URL from IRC channels and prints out the title
 #
 # Version Log:
+# 0.05     Added SNI support for TLS (with TLS version check)
 # 0.04     HTML parsing for titles added
 # 0.03c    HTTPS support is now optional and will be automatically dropeed if TCL TSL package does not exist
 # 0.03b    Some formatting
@@ -50,15 +51,39 @@ namespace eval UrlTitle {
 
   # PACKAGES
   package require http                ;# You need the http package..
-  if {[catch {package require tls}]} {
+  if {[catch {set tlsVersion [package require tls]}]} {
     set httpsSupport false
   } else {
     set httpsSupport true
+    if {[package vcompare $tlsVersion 1.6.4] < 0} {
+      putlog "UrlTitle: TCL TLS version 1.6.4 or newer is required for proper https support (SNI)"
+    }
   }
   if {[catch {package require htmlparse}]} {
     set htmlSupport false
   } else {
     set htmlSupport true
+  }
+
+  # Enable SNI support for TLS if suitable TLS version is installed
+  proc socket {args} {
+    variable tlsVersion
+    set opts [lrange $args 0 end-2]
+    set host [lindex $args end-1]
+    set port [lindex $args end]
+
+    if {[package vcompare $tlsVersion 1.7.11] >= 0} {
+      # tls version 1.7.11 should support autoservername
+      ::tls::socket -autoservername {*}$opts $host $port
+    } elseif {[package vcompare $tlsVersion 1.6.7] >= 0} {
+      # From version 1.6.7, it shouldn't be necessary to specify any ciphers.
+      ::tls::socket -servername $host {*}$opts $host $port
+    } elseif {[package vcompare $tlsVersion 1.6.4] >= 0} {
+      ::tls::socket -ssl3 false -ssl2 false -tls1 true -servername $host {*}$opts $host $port
+    } else {
+      # default fallback without servername (SNI certs will not work)
+      ::tls::socket -ssl3 false -ssl2 false -tls1 true {*}$opts $host $port
+    }
   }
 
   proc handler {nick host user chan text} {
@@ -76,7 +101,7 @@ namespace eval UrlTitle {
           set last $unixtime
           # enable https if supported
           if {$httpsSupport} {
-            ::http::register https 443 [list ::tls::socket -tls1 1]
+            ::http::register https 443 [list UrlTitle::socket]
           }
           set urtitle [UrlTitle::parse $word]
           if {$htmlSupport} {

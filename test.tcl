@@ -126,3 +126,7 @@ source $scriptname
 
 # TESTS GO HERE
 pubm "Check it out at https://github.com/teeli/urltitle"
+# multiple title tag tesst
+pubm "http://www.rumba.fi/uutiset/kommentti-paskaa-suomi-iskelmaa-tekeva-kotiteollisuus-haluaa-julkisuuteen-julkaisee-levyn/"
+# SNI TLS test
+pubm "https://www.rust-lang.org/en-US/"
