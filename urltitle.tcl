@@ -12,20 +12,20 @@
 # 0.03c    HTTPS support is now optional and will be automatically dropeed if TCL TSL package does not exist
 # 0.03b    Some formatting
 # 0.03     HTTPS support
-# 0.02     Updated version by teel. Added support for redirects, trimmed titles (remove extra whitespaces), 
+# 0.02     Updated version by teel. Added support for redirects, trimmed titles (remove extra whitespaces),
 #          some optimization
 # 0.01a    Original version by rosc
 #
 ################################################################################################################
-# 
+#
 # Original script:
-# Copyright C.Leonhardt (rosc2112 at yahoo com) Aug.11.2007 
+# Copyright C.Leonhardt (rosc2112 at yahoo com) Aug.11.2007
 # http://members.dandy.net/~fbn/urltitle.tcl.txt
 # Loosely based on the tinyurl script by Jer and other bits and pieces of my own..
 #
 ################################################################################################################
 #
-# Usage: 
+# Usage:
 #
 # 1) Set the configs below
 # 2) .chanset #channelname +urltitle        ;# enable script
@@ -166,6 +166,7 @@ namespace eval UrlTitle {
     }
     return $title
   }
+
 
   putlog "Initialized Url Title Grabber v$scriptVersion"
 }

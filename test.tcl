@@ -1,6 +1,6 @@
 #!/usr/bin/env tclsh
 ###############################################################
-# 
+#
 # Test script for eggdrop scripts
 #
 ###############################################################
@@ -86,7 +86,7 @@ proc pub {cmd {value ""}} {
         set p [dict get $pub $cmd]
         $p $nickname $uhost $handle $channel $value
         return
-    }   
+    }
     puts "ERROR:    $cmd does not exists in pub";
 }
 
@@ -102,7 +102,7 @@ proc msg {cmd {value ""}} {
         set p [dict get $msg $cmd]
         $p $nickname $uhost $handle $value
         return
-    }   
+    }
     puts "ERROR:    $cmd does not exists in msg";
 }
 
@@ -118,7 +118,7 @@ proc dcc {cmd {value ""}} {
         set p [dict get $dcc [string range $cmd 1 999]]
         $p $nickname $uhost $handle $value
         return
-    }   
+    }
     puts "ERROR:    $cmd does not exists in dcc";
 }
 
