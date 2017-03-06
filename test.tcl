@@ -126,7 +126,24 @@ source $scriptname
 
 # TESTS GO HERE
 pubm "Check it out at https://github.com/teeli/urltitle"
+after 5000
 # multiple title tag tesst
 pubm "http://www.rumba.fi/uutiset/kommentti-paskaa-suomi-iskelmaa-tekeva-kotiteollisuus-haluaa-julkisuuteen-julkaisee-levyn/"
+after 5000
 # SNI TLS test
 pubm "https://www.rust-lang.org/en-US/"
+after 5000
+# SNI TLS test
+pubm "https://centmin.sh/"
+after 5000
+# xpath test 1
+pubm "https://pbs.twimg.com/media/C58JTUXXEAIbCUv.jpg"
+after 5000
+# xpath test 2
+pubm "https://www.amazon.com/Bro-Custom-Symbol-Tees-Doggy-Yellow/dp/B01EDXDU4M/"
+after 5000
+# xpath test 3
+pubm "http://img.fark.net/images/cache/850/W/Wt/fark_WtjCu6v522v0PIvoDm2QVLDv97U.jpg?t=3GK9fKLvopse5AD0O7kErA&f=1488776400"
+after 5000
+
+pubm "done"

@@ -6,6 +6,8 @@
 # Detects URL from IRC channels and prints out the title
 #
 # Version Log:
+# 0.07     Added Content-Type check (text/html only) and exceptino handling for tDom with a fallback to
+#          regexp if tDom fails.
 # 0.06     Added XPATH support to title parsing (only if tdom package is available)
 # 0.05     Added SNI support for TLS (with TLS version check)
 # 0.04     HTML parsing for titles added
@@ -139,23 +141,32 @@ namespace eval UrlTitle {
         if { [::http::status $http] == "ok" } {
           set data [::http::data $http]
           set status [::http::code $http]
-          set meta [::http::meta $http]
-          switch -regexp -- $status {
-            "HTTP.*200.*" {
-              if {$tdomSupport} {
-                # use XPATH if tdom is supported
-                set doc [dom parse -html $data]
-                set root [$doc documentElement]
-                set title [[$root selectNodes {//head/title/text()}] data]
-              } else {
-                # fallback to regex parsing (eww)
-                regexp -nocase {<title.*>(.*?)</title>} $data match title
-                set title [regsub -all -nocase {\s+} $title " "]
+          array set meta [::http::meta $http]
+          # only parse html files for titles
+          if { [string first "text/html" $meta(Content-Type)] >= 0 } {
+            switch -regexp -- $status {
+              "HTTP.*200.*" {
+                if {$tdomSupport} {
+                  # use XPATH if tdom is supported
+                  if {[catch {set doc [dom parse -html -simple $data]} results]} {
+                    # fallback to regex parsing if tdom fails
+                    regexp -nocase {<title.*>(.*?)</title>} $data match title
+                    set title [regsub -all -nocase {\s+} $title " "]
+                  } else {
+                    # parse dom
+                    set root [$doc documentElement]
+                    set title [[$root selectNodes {//head/title/text()}] data]
+                  }
+                } else {
+                  # fallback to regex parsing if tdom is not enabled
+                  regexp -nocase {<title.*>(.*?)</title>} $data match title
+                  set title [regsub -all -nocase {\s+} $title " "]
+                }
               }
-            }
-            "HTTP\/[0-1]\.[0-1].3.*" {
-              regexp -nocase {Location\s(http[^\s]+)} $meta match location
-              catch {set title [UrlTitle::parse $location]} error
+              "HTTP\/[0-1]\.[0-1].3.*" {
+                regexp -nocase {Location\s(http[^\s]+)} $meta match location
+                catch {set title [UrlTitle::parse $location]} error
+              }
             }
           }
         } else {
