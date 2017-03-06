@@ -7,3 +7,11 @@ Installation
 ------------
 
 Just copy urltitle.tcl to your eggdrop scripts directory, set config parameters and add to your Eggdrop configuration file. Works without any configuration, but you can set some options in the script file if you want.
+
+Requirements
+------------
+
+The script should work without any additional dependencies, but for the best results, the following tcl packages are recommended:
+- **tls:** Required for https URLs
+- **htmlparse:** Parse html entities in titles
+- **tdom:** More reliable `<title>` tag parsin using xpath (instead of regex).
