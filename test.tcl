@@ -40,6 +40,11 @@ proc putserv {output} {
     puts "PUTSERV:  $output";
 }
 
+# output eggdrop puthelpcommand to stdout
+proc puthelp {output} {
+    puts "PUTSERV:  $output";
+}
+
 # output egggdrop putlog command to stdout
 proc putlog {output} {
     puts "PUTLOG:   $output";

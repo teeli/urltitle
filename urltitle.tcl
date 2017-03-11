@@ -6,6 +6,7 @@
 # Detects URL from IRC channels and prints out the title
 #
 # Version Log:
+# 0.08     Changed putserv to puthelp to queue the messages
 # 0.07     Added Content-Type check (text/html only) and exceptino handling for tDom with a fallback to
 #          regexp if tDom fails.
 # 0.06     Added XPATH support to title parsing (only if tdom package is available)
@@ -120,7 +121,7 @@ namespace eval UrlTitle {
             ::http::unregister https
           }
           if {[string length $urtitle]} {
-            putserv "PRIVMSG $chan :Title: $urtitle"
+            puthelp "PRIVMSG $chan :Title: $urtitle"
           }
           break
         }
