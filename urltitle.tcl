@@ -164,8 +164,7 @@ namespace eval UrlTitle {
                 }
               }
               "HTTP\/[0-1]\.[0-1].3.*" {
-                regexp -nocase {Location\s(http[^\s]+)} $meta match location
-                catch {set title [UrlTitle::parse $location]} error
+                catch {set title [UrlTitle::parse $meta(location)]} error
               }
             }
           }

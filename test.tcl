@@ -145,5 +145,9 @@ after 5000
 # xpath test 3
 pubm "http://img.fark.net/images/cache/850/W/Wt/fark_WtjCu6v522v0PIvoDm2QVLDv97U.jpg?t=3GK9fKLvopse5AD0O7kErA&f=1488776400"
 after 5000
+# redirect 301 test
+pubm "https://www.pastebin.com/"
+after 5000
+
 
 pubm "done"
