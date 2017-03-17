@@ -15,3 +15,7 @@ The script should work without any additional dependencies, but for the best res
 - **tls:** Required for https URLs
 - **htmlparse:** Parse html entities in titles
 - **tdom:** More reliable `<title>` tag parsin using xpath (instead of regex).
+
+Broken URLs?
+------------
+If you encounter any URLs that isn't working properly, please report them under [#10](https://github.com/teeli/urltitle/issues/10).
