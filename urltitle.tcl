@@ -141,7 +141,7 @@ namespace eval UrlTitle {
           set status [::http::code $http]
           array set meta [::http::meta $http]
           # only parse html files for titles
-          if { [string first "text/html" $meta(Content-Type)] >= 0 } {
+          if { [info exists meta(Content-Type)] == 1 && [string first "text/html" $meta(Content-Type)] >= 0 } {
             switch -regexp -- $status {
               "HTTP.*200.*" {
                 if {$tdomSupport} {
