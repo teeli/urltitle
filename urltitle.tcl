@@ -117,6 +117,9 @@ namespace eval UrlTitle {
           if {$httpsSupport} {
             ::http::unregister https
           }
+          if {$urtitle eq ""} {
+            break
+          }
           if {[string length $urtitle]} {
             puthelp "PRIVMSG $chan :Title: $urtitle"
           }
