@@ -39,38 +39,36 @@
 
 namespace eval UrlTitle {
   # CONFIG
-  set ignore "bdkqr|dkqr"   ;# User flags script will ignore input from
-  set length 5              ;# minimum url length to trigger channel eggdrop use
-  set delay 1               ;# minimum seconds to wait before another eggdrop use
-  set timeout 5000          ;# geturl timeout (1/1000ths of a second)
+  variable ignore "bdkqr|dkqr" ;# User flags script will ignore input from
+  variable length 5            ;# minimum url length to trigger channel eggdrop use
+  variable delay 1             ;# minimum seconds to wait before another eggdrop use
+  variable timeout 5000        ;# geturl timeout (1/1000ths of a second)
+  variable fetchLimit 5        ;# How many times to process redirects before erroring
 
   # BINDS
   bind pubm "-|-" {*://*} UrlTitle::handler
-  setudef flag urltitle               ;# Channel flag to enable script.
-  setudef flag logurltitle            ;# Channel flag to enable logging of script.
+  setudef flag urltitle        ;# Channel flag to enable script.
+  setudef flag logurltitle     ;# Channel flag to enable logging of script.
 
   # INTERNAL
-  set last 1                ;# Internal variable, stores time of last eggdrop use, don't change..
-  set scriptVersion 0.06
+  variable last 1              ;# Internal variable, stores time of last eggdrop use, don't change..
+  variable scriptVersion 0.06
 
   # PACKAGES
-  package require http                ;# You need the http package..
-  if {[catch {set tlsVersion [package require tls]}]} {
-    set httpsSupport false
-  } else {
+  package require http         ;# You need the http package..
+  variable httpsSupport false
+  variable htmlSupport false
+  variable tdomSupport false
+  if {![catch {variable tlsVersion [package require tls]}]} {
     set httpsSupport true
     if {[package vcompare $tlsVersion 1.6.4] < 0} {
       putlog "UrlTitle: TCL TLS version 1.6.4 or newer is required for proper https support (SNI)"
     }
   }
-  if {[catch {package require htmlparse}]} {
-    set htmlSupport false
-  } else {
+  if {![catch {package require htmlparse}]} {
     set htmlSupport true
   }
-  if {[catch {package require tdom}]} {
-    set tdomSupport false
-  } else {
+  if {![catch {package require tdom}]} {
     set tdomSupport true
   }
 
@@ -131,12 +129,28 @@ namespace eval UrlTitle {
     return 1
   }
 
+  # General HTTP redirect handler
+  proc Fetch {url args} {
+    variable fetchLimit
+    for {set count 0} {$count < $fetchLimit} {incr count} {
+      set token [::http::geturl $url {*}$args]
+      if {[::http::status $token] ne "ok" ||
+	  ![string match 3?? [::http::ncode $token]]} {
+        break
+      }
+      set url [dict get [::http::meta $tokn] location]
+      ::http::cleanup $token
+      # putlog "Redirected to $url"
+    }
+    return $token
+  }
+
   proc parse {url} {
     variable timeout
     variable tdomSupport
     set title ""
     if {[info exists url] && [string length $url]} {
-      if {[catch {set http [::http::geturl $url -timeout $timeout]} results]} {
+      if {[catch {set http [Fetch $url -timeout $timeout]} results]} {
         putlog "Connection to $url failed"
       } else {
         if { [::http::status $http] == "ok" } {
