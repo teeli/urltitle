@@ -6,6 +6,7 @@
 # Detects URL from IRC channels and prints out the title
 #
 # Version Log:
+# 0.09     HTTPs redirects, case-insensitive HTTP header fix, other small bug fixes
 # 0.08     Changed putserv to puthelp to queue the messages
 # 0.07     Added Content-Type check (text/html only) and exceptino handling for tDom with a fallback to
 #          regexp if tDom fails.
@@ -52,7 +53,7 @@ namespace eval UrlTitle {
 
   # INTERNAL
   variable last 1              ;# Internal variable, stores time of last eggdrop use, don't change..
-  variable scriptVersion 0.06
+  variable scriptVersion 0.09
 
   # PACKAGES
   package require http         ;# You need the http package..
@@ -134,13 +135,17 @@ namespace eval UrlTitle {
     variable fetchLimit
     for {set count 0} {$count < $fetchLimit} {incr count} {
       set token [::http::geturl $url {*}$args]
-      if {[::http::status $token] ne "ok" ||
-	  ![string match 3?? [::http::ncode $token]]} {
+      if {[::http::status $token] ne "ok" || ![string match 3?? [::http::ncode $token]]} {
         break
       }
-      set url [dict get [::http::meta $tokn] location]
+      set meta [::http::meta $token]
+      if {[dict exists $meta Location]} {
+        set url [dict get $meta Location]
+      }
+      if {[dict exists $meta location]} {
+        set url [dict get $meta location]
+      }
       ::http::cleanup $token
-      # putlog "Redirected to $url"
     }
     return $token
   }
@@ -152,13 +157,18 @@ namespace eval UrlTitle {
     if {[info exists url] && [string length $url]} {
       if {[catch {set http [Fetch $url -timeout $timeout]} results]} {
         putlog "Connection to $url failed"
+        putlog "Error: $results"
       } else {
         if { [::http::status $http] == "ok" } {
           set data [::http::data $http]
           set status [::http::code $http]
-          array set meta [::http::meta $http]
+          set meta [::http::meta $http]
+
           # only parse html files for titles
-          if { [info exists meta(Content-Type)] == 1 && [string first "text/html" $meta(Content-Type)] >= 0 } {
+          if {
+            ([dict exists $meta Content-Type] && [string first "text/html" [dict get $meta Content-Type]] >= 0) ||
+            ([dict exists $meta content-type] && [string first "text/html" [dict get $meta content-type]] >= 0)
+          } {
             switch -regexp -- $status {
               "HTTP.*200.*" {
                 if {$tdomSupport} {
@@ -179,7 +189,12 @@ namespace eval UrlTitle {
                 }
               }
               "HTTP\/[0-1]\.[0-1].3.*" {
-                catch {set title [UrlTitle::parse $meta(location)]} error
+                if {[dict exists $meta Location]} {
+                  set title [UrlTitle::parse [dict get $meta Location]]
+                }
+                if {[dict exists $meta location]} {
+                  set title [UrlTitle::parse [dict get $meta location]]
+                }
               }
             }
           }

@@ -153,6 +153,16 @@ after 5000
 # redirect 301 test
 pubm "https://www.pastebin.com/"
 after 5000
-
+# more tests from githb
+pubm "http://www.google.com"
+after 5000
+pubm "https://www.google.com"
+after 5000
+pubm "http://google.com"
+after 5000
+pubm "https://www.google.com"
+after 5000
+pubm "https://twitter.com/ItMeIRL/status/893133548118564864"
+after 5000
 
 pubm "done"
