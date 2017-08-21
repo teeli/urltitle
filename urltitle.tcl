@@ -6,6 +6,7 @@
 # Detects URL from IRC channels and prints out the title
 #
 # Version Log:
+# 0.10     Fixed XPath parsing error and added regex fallback if XPath fails
 # 0.09     HTTPs redirects, case-insensitive HTTP header fix, other small bug fixes
 # 0.08     Changed putserv to puthelp to queue the messages
 # 0.07     Added Content-Type check (text/html only) and exceptino handling for tDom with a fallback to
@@ -150,6 +151,33 @@ namespace eval UrlTitle {
     return $token
   }
 
+  proc parseTitleXPath {data} {
+    set title ""
+    if {[catch {set doc [dom parse -html -simple $data]} results]} {
+      # fallback to regex parsing if tdom fails
+      set title [parseTitleRegex $data]
+    } else {
+      # parse dom
+      set root [$doc documentElement]
+      set node [$root selectNodes {//head/title/text()}]
+      if {$node != ""} {
+        # return title if XPath was able to parse it
+        set title [$node data]
+      } else {
+        # Fallback to regex if XPath failed
+        set title [parseTitleRegex $data]
+      }
+    }
+  }
+
+  proc parseTitleRegex {data} {
+    set title ""
+    # fallback to regex parsing if tdom fails
+    regexp -nocase {<title.*>(.*?)</title>} $data match title
+    set title [regsub -all -nocase {\s+} $title " "]
+    return $title
+  }
+
   proc parse {url} {
     variable timeout
     variable tdomSupport
@@ -173,19 +201,10 @@ namespace eval UrlTitle {
               "HTTP.*200.*" {
                 if {$tdomSupport} {
                   # use XPATH if tdom is supported
-                  if {[catch {set doc [dom parse -html -simple $data]} results]} {
-                    # fallback to regex parsing if tdom fails
-                    regexp -nocase {<title.*>(.*?)</title>} $data match title
-                    set title [regsub -all -nocase {\s+} $title " "]
-                  } else {
-                    # parse dom
-                    set root [$doc documentElement]
-                    set title [[$root selectNodes {//head/title/text()}] data]
-                  }
+                  set title [parseTitleXPath $data]
                 } else {
                   # fallback to regex parsing if tdom is not enabled
-                  regexp -nocase {<title.*>(.*?)</title>} $data match title
-                  set title [regsub -all -nocase {\s+} $title " "]
+                  set title [parseTitleRegex $data]
                 }
               }
               "HTTP\/[0-1]\.[0-1].3.*" {

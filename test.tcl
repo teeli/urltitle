@@ -164,5 +164,8 @@ pubm "https://www.google.com"
 after 5000
 pubm "https://twitter.com/ItMeIRL/status/893133548118564864"
 after 5000
+# xpath error
+pubm "http://blog.dilbert.com/post/164297628606/how-to-know-youre-in-a-mass-hysteria-bubble"
+after 5000
 
 pubm "done"
