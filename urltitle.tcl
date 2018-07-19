@@ -48,7 +48,7 @@ namespace eval UrlTitle {
   variable fetchLimit 5        ;# How many times to process redirects before erroring
 
   # BINDS
-  bind pubm "-|-" {*://*} UrlTitle::handler
+  bind pubm "-|-" {*} UrlTitle::handler
   setudef flag urltitle        ;# Channel flag to enable script.
   setudef flag logurltitle     ;# Channel flag to enable logging of script.
 
@@ -102,8 +102,7 @@ namespace eval UrlTitle {
     set unixtime [clock seconds]
     if {[channel get $chan urltitle] && ($unixtime - $delay) > $last && (![matchattr $user $ignore])} {
       foreach word [split $text] {
-        if {[string length $word] >= $length && [regexp {^(f|ht)tp(s|)://} $word] && \
-            ![regexp {://([^/:]*:([^/]*@|\d+(/|$))|.*/\.)} $word]} {
+         if {[string length $word] >= $length && [regexp {((?:[a-zA-Z][\w-]+:(?:\/{1,3}|[a-zA-Z0-9%])|www\d{0,3}[.]|[a-zA-Z0-9\-]+[.][a-zA-Z]{2,4}\/?)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\)){0,}(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s\!()\[\]{};:\'\"\.\,<>?«»“”‘’]){0,})} $word]} {
           set last $unixtime
           # enable https if supported
           if {$httpsSupport} {
@@ -511,7 +510,6 @@ namespace eval UrlTitle {
             set tit [string map $html_mapping $urtitle]
             puthelp "PRIVMSG $chan :\002$tit"
           }
-          break
         }
       }
     }
@@ -570,7 +568,14 @@ namespace eval UrlTitle {
     variable timeout
     variable tdomSupport
     set title ""
+
     if {[info exists url] && [string length $url]} {
+      if {
+          ([string first "http://" $url] == -1) &&
+          ([string first "https://" $url] == -1)
+      } {
+        set url "http://$url"
+      }
       if {[catch {set http [Fetch $url -timeout $timeout]} results]} {
         putlog "Connection to $url failed"
         putlog "Error: $results"
