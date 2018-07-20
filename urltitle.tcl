@@ -195,7 +195,6 @@ namespace eval UrlTitle {
 
       ## Some websites will display a title if an image is passed without an extension.
       regsub -nocase {(\.png|\.gif|.jpeg|\.jpg)\Z} $url {} url
-      regsub -nocase {(i.imgur.com)} $url {imgur.com} url
 
       if {[catch {set http [Fetch $url -timeout $timeout]} results]} {
         putlog "Connection to $url failed"
