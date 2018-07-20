@@ -130,7 +130,7 @@ namespace eval UrlTitle {
       }
     }
     # change to return 0 if you want the pubm trigger logged additionally..
-    return 1
+    return 0
   }
 
   # General HTTP redirect handler
