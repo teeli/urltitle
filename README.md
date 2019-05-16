@@ -14,7 +14,7 @@ Requirements
 The script should work without any additional dependencies, but for the best results, the following tcl packages are recommended:
 - **tls:** Required for https URLs
 - **htmlparse:** Parse html entities in titles
-- **tdom:** More reliable `<title>` tag parsin using xpath (instead of regex).
+- **tdom:** More reliable `<title>` tag parsing using xpath (instead of regex).
 
 Broken URLs?
 ------------
