@@ -50,7 +50,7 @@ namespace eval UrlTitle {
   variable fetchLimit 5        ;# How many times to process redirects before erroring
 
   # BINDS
-  bind pubm "-|-" {*://*} UrlTitle::handler
+  bind pubm "-|-" {*} UrlTitle::handler
   setudef flag urltitle        ;# Channel flag to enable script.
   setudef flag logurltitle     ;# Channel flag to enable logging of script.
 
@@ -104,8 +104,7 @@ namespace eval UrlTitle {
     set unixtime [clock seconds]
     if {[channel get $chan urltitle] && ($unixtime - $delay) > $last && (![matchattr $user $ignore])} {
       foreach word [split $text] {
-        if {[string length $word] >= $length && [regexp {^(f|ht)tp(s|)://} $word] && \
-            ![regexp {://([^/:]*:([^/]*@|\d+(/|$))|.*/\.)} $word]} {
+         if {[string length $word] >= $length && [regexp {((?:[a-zA-Z][\w-]+:(?:\/{1,3}|[a-zA-Z0-9%])|www\d{0,3}[.]|[a-zA-Z0-9\-]+[.][a-zA-Z]{2,4}\/?)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\)){0,}(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s\!()\[\]{};:\'\"\.\,<>?«»“”‘’]){0,})} $word]} {
           set last $unixtime
           # enable https if supported
           if {$httpsSupport} {
@@ -114,7 +113,11 @@ namespace eval UrlTitle {
           set urtitle [UrlTitle::parse $word]
           if {$htmlSupport} {
             set urtitle [::htmlparse::mapEscapes $urtitle]
+          } else {
+            # Fallback to a simple decoder if htmlparse not installed
+            set urtitle [simpleHtmlDecode $urtitle]
           }
+
           # unregister https if supported
           if {$httpsSupport} {
             ::http::unregister https
@@ -123,14 +126,13 @@ namespace eval UrlTitle {
             break
           }
           if {[string length $urtitle]} {
-            puthelp "PRIVMSG $chan :Title: $urtitle"
+            puthelp "PRIVMSG $chan :\002$urtitle"
           }
-          break
         }
       }
     }
     # change to return 0 if you want the pubm trigger logged additionally..
-    return 1
+    return 0
   }
 
   # General HTTP redirect handler
@@ -184,7 +186,18 @@ namespace eval UrlTitle {
     variable timeout
     variable tdomSupport
     set title ""
+
     if {[info exists url] && [string length $url]} {
+      if {
+          ([string first "http://" $url] == -1) &&
+          ([string first "https://" $url] == -1)
+      } {
+        set url "http://$url"
+      }
+
+      ## Some websites will display a title if an image is passed without an extension.
+      regsub -nocase {(\.png|\.gif|.jpeg|\.jpg)\Z} $url {} url
+
       if {[catch {set http [Fetch $url -timeout $timeout]} results]} {
         putlog "Connection to $url failed"
         putlog "Error: $results"
@@ -231,6 +244,399 @@ namespace eval UrlTitle {
     return $title
   }
 
+  # Simple html decoder if htmlparse is not available
+  proc simpleHtmlDecode {text} {
+    set title ""
+    set html_mapping {
+      &lsquo; '
+      &rsquo; '
+      &#8217; '
+      &#8211; '
+      &apos; '
+      &#10; " "
+      &#010; " "
+      &sbquo; ‚
+      &ldquo; “
+      &rdquo; ”
+      &bdquo; „
+      &dagger; †
+      &Dagger; ‡
+      &permil; ‰
+      &lsaquo; ‹
+      &rsaquo; ›
+      &spades; ♠
+      &clubs; ♣
+      &hearts; ♥
+      &diams; ♦
+      &oline; ‾
+      &#8592; ←
+      &larr; ←
+      &#8593; ↑
+      &uarr; ↑
+      &#8594; →
+      &rarr; →
+      &#8595; ↓
+      &darr; ↓
+      &#8598; ↖
+      &nwarr; ↖
+      &#8599; ↗
+      &nearr; ↗
+      &#8601; ↙
+      &swarr; ↙
+      &#8600; ↘
+      &searr; ↘
+      &#9650; ▲
+      &#x25B2; ▲
+      &#9652; ▴
+      &#x25B4; ▴
+      &#9654; ▶
+      &#x25B6; ▶
+      &#9656; ▸
+      &#x25B8; ▸
+      &#9658; ►
+      &#x25BA; ►
+      &#9660; ▼
+      &#x25BC; ▼
+      &#9662; ▾
+      &#x25BE; ▾
+      &#9664; ◀
+      &#x25C0; ◀
+      &#9666; ◂
+      &#x25C2; ◂
+      &#9668; ◄
+      &#x25C4; ◄
+      &#x2122; ™
+      &#x27; '
+      &trade; ™
+      &#00; -
+      &#000; -
+      &#33; !
+      &#033; !
+      &#34; {"}
+      &#034; {"}
+      &quot; {"}
+      &#35; {#}
+      &#035; {#}
+      &#36; $
+      &#036; $
+      &#37; %
+      &#037; %
+      &#38; &
+      &#038; &
+      &amp; &
+      &#39; '
+      &#039; '
+      &#40; (
+      &#040; (
+      &#41; )
+      &#041; )
+      &#42; *
+      &#042; *
+      &#43; +
+      &#043; +
+      &#44; ,
+      &#044; ,
+      &#45; -
+      &#045; -
+      &#46; .
+      &#046; .
+      &#47; /
+      &#047; /
+      &frasl; /
+      &#48; -
+      &#048; -
+      &#58; :
+      &#058; :
+      &#59; ;
+      &#059; ;
+      &#60; <
+      &#060; <
+      &lt; <
+      &#61; =
+      &#061; =
+      &#62; >
+      &#062; >
+      &gt; >
+      &#63; ?
+      &#063; ?
+      &#64; @
+      &#064; @
+      &#65; -
+      &#065; -
+      &#91; [
+      &#091; [
+      &#92; \
+      &#092; \
+      &#93; ]
+      &#093; ]
+      &#94; ^
+      &#094; ^
+      &#95; _
+      &#095; _
+      &#96; `
+      &#096; `
+      &#97; -
+      &#097; -
+      &#123; {
+      &#124; |
+      &#125; }
+      &#126; ~
+      &#133; …
+      &hellip; …
+      &#150; –
+      &ndash; –
+      &#151; —
+      &mdash; —
+      &#152; -
+      &#159; " "
+      &#160; " "
+      &#161; ¡
+      &iexcl; ¡
+      &#162; ¢
+      &cent; ¢
+      &#163; £
+      &pound; £
+      &#164; ¤
+      &curren; ¤
+      &#165; ¥
+      &yen; ¥
+      &#166; ¦
+      &brvbar; ¦
+      &brkbar; ¦
+      &#167; §
+      &sect; §
+      &#168; ¨
+      &uml; ¨
+      &die; ¨
+      &#169; ©
+      &copy; ©
+      &#170; ª
+      &ordf; ª
+      &#171; «
+      &laquo; «
+      &#172; ¬
+      &not; ¬
+      &#174; ®
+      &reg; ®
+      &#175; ¯
+      &macr; ¯
+      &hibar; ¯
+      &#176; °
+      &deg; °
+      &#177; ±
+      &plusmn; ±
+      &#178; ²
+      &sup2; ²
+      &#179; ³
+      &sup3; ³
+      &#180; ´
+      &acute; ´
+      &#181; µ
+      &micro; µ
+      &#182; ¶
+      &para; ¶
+      &#183; ·
+      &middot; ·
+      &#184; ¸
+      &cedil; ¸
+      &#185; ¹
+      &sup1; ¹
+      &#186; º
+      &ordm; º
+      &#187; »
+      &raquo; »
+      &#188; ¼
+      &frac14; ¼
+      &#189; ½
+      &frac12; ½
+      &#190; ¾
+      &frac34; ¾
+      &#191; ¿
+      &iquest; ¿
+      &#192; À
+      &Agrave; À
+      &#193; Á
+      &Aacute; Á
+      &#194; Â
+      &Acirc; Â
+      &#195; Ã
+      &Atilde; Ã
+      &#196; Ä
+      &Auml; Ä
+      &#197; Å
+      &Aring; Å
+      &#198; Æ
+      &AElig; Æ
+      &#199; Ç
+      &Ccedil; Ç
+      &#200; È
+      &Egrave; È
+      &#201; É
+      &Eacute; É
+      &#202; Ê
+      &Ecirc; Ê
+      &#203; Ë
+      &Euml; Ë
+      &#204; Ì
+      &Igrave; Ì
+      &#205; Í
+      &Iacute; Í
+      &#206; Î
+      &Icirc; Î
+      &#207; Ï
+      &Iuml; Ï
+      &#208; Ð
+      &ETH; Ð
+      &#209; Ñ
+      &Ntilde; Ñ
+      &#210; Ò
+      &Ograve; Ò
+      &#211; Ó
+      &Oacute; Ó
+      &#212; Ô
+      &Ocirc; Ô
+      &#213; Õ
+      &Otilde; Õ
+      &#214; Ö
+      &Ouml; Ö
+      &#215; ×
+      &times; ×
+      &#216; Ø
+      &Oslash; Ø
+      &#217; Ù
+      &Ugrave; Ù
+      &#218; Ú
+      &Uacute; Ú
+      &#219; Û
+      &Ucirc; Û
+      &#220; Ü
+      &Uuml; Ü
+      &#221; Ý
+      &Yacute; Ý
+      &#222; Þ
+      &THORN; Þ
+      &#223; ß
+      &szlig; ß
+      &#224; à
+      &agrave; à
+      &#225; á
+      &aacute; á
+      &#226; â
+      &acirc; â
+      &#227; ã
+      &atilde; ã
+      &#228; ä
+      &auml; ä
+      &#229; å
+      &aring; å
+      &#230; æ
+      &aelig; æ
+      &#231; ç
+      &ccedil; ç
+      &#232; è
+      &egrave; è
+      &#233; é
+      &eacute; é
+      &#234; ê
+      &ecirc; ê
+      &#235; ë
+      &euml; ë
+      &#236; ì
+      &igrave; ì
+      &#237; í
+      &iacute; í
+      &#238; î
+      &icirc; î
+      &#239; ï
+      &iuml; ï
+      &#240; ð
+      &eth; ð
+      &#241; ñ
+      &ntilde; ñ
+      &#242; ò
+      &ograve; ò
+      &#243; ó
+      &oacute; ó
+      &#244; ô
+      &ocirc; ô
+      &#245; õ
+      &otilde; õ
+      &#246; ö
+      &ouml; ö
+      &#247; ÷
+      &divide; ÷
+      &#248; ø
+      &oslash; ø
+      &#249; ù
+      &ugrave; ù
+      &#250; ú
+      &uacute; ú
+      &#251; û
+      &ucirc; û
+      &#252; ü
+      &uuml; ü
+      &#253; ý
+      &yacute; ý
+      &#254; þ
+      &thorn; þ
+      &#255; ÿ
+      &yuml; ÿ
+      &Alpha; Α
+      &alpha; α
+      &Beta; Β
+      &beta; β
+      &Gamma; Γ
+      &gamma; γ
+      &Delta; Δ
+      &delta; δ
+      &Epsilon; Ε
+      &epsilon; ε
+      &Zeta; Ζ
+      &zeta; ζ
+      &Eta; Η
+      &eta; η
+      &Theta; Θ
+      &theta; θ
+      &Iota; Ι
+      &iota; ι
+      &Kappa; Κ
+      &kappa; κ
+      &Lambda; Λ
+      &lambda; λ
+      &Mu; Μ
+      &mu; μ
+      &Nu; Ν
+      &nu; ν
+      &Xi; Ξ
+      &xi; ξ
+      &Omicron; Ο
+      &omicron; ο
+      &Pi; Π
+      &pi; π
+      &Rho; Ρ
+      &rho; ρ
+      &Sigma; Σ
+      &sigma; σ
+      &Tau; Τ
+      &tau; τ
+      &Upsilon; Υ
+      &upsilon; υ
+      &Phi; Φ
+      &phi; φ
+      &Chi; Χ
+      &chi; χ
+      &Psi; Ψ
+      &psi; ψ
+      &Omega; Ω
+      &omega; ω
+      &#9679; ●
+      &#8226; •
+      &#8734; ∞
+      &infin; ∞
+    }
+    set title [string map $html_mapping $text]
+    return $title
+  }
 
   putlog "Initialized Url Title Grabber v$scriptVersion"
 }
