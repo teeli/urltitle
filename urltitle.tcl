@@ -215,6 +215,9 @@ namespace eval UrlTitle {
                   set title [UrlTitle::parse [dict get $meta location]]
                 }
               }
+              default {
+                putlog "Error: $status ($url)"
+              }
             }
           }
         } else {
