@@ -6,6 +6,8 @@
 # Detects URL from IRC channels and prints out the title
 #
 # Version Log:
+# 0.11     Updated regex parser to only parse titles inside <head> tags
+#          Added HTTP error status logging
 # 0.10     Fixed XPath parsing error and added regex fallback if XPath fails
 # 0.09     HTTPs redirects, case-insensitive HTTP header fix, other small bug fixes
 # 0.08     Changed putserv to puthelp to queue the messages
@@ -54,7 +56,7 @@ namespace eval UrlTitle {
 
   # INTERNAL
   variable last 1              ;# Internal variable, stores time of last eggdrop use, don't change..
-  variable scriptVersion 0.10
+  variable scriptVersion 0.11
 
   # PACKAGES
   package require http         ;# You need the http package..
