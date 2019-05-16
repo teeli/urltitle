@@ -173,7 +173,7 @@ namespace eval UrlTitle {
   proc parseTitleRegex {data} {
     set title ""
     # fallback to regex parsing if tdom fails
-    regexp -nocase {<title.*>(.*?)</title>} $data match title
+    regexp -nocase {<head>.*<title.*>(.*?)</title>.*</head>} $data match title
     set title [regsub -all -nocase {\s+} $title " "]
     return $title
   }
