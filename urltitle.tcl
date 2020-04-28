@@ -48,6 +48,11 @@ namespace eval UrlTitle {
   variable delay 1             ;# minimum seconds to wait before another eggdrop use
   variable timeout 5000        ;# geturl timeout (1/1000ths of a second)
   variable fetchLimit 5        ;# How many times to process redirects before erroring
+  variable urlignore           ;# Url patterns to ignore
+  set urlignore [list \
+    #{://www\.youtube\.com} \
+    #{://youtu\.be} \
+  ]
 
   # BINDS
   bind pubm "-|-" {*://*} UrlTitle::handler
@@ -105,7 +110,8 @@ namespace eval UrlTitle {
     if {[channel get $chan urltitle] && ($unixtime - $delay) > $last && (![matchattr $user $ignore])} {
       foreach word [split $text] {
         if {[string length $word] >= $length && [regexp {^(f|ht)tp(s|)://} $word] && \
-            ![regexp {://([^/:]*:([^/]*@|\d+(/|$))|.*/\.)} $word]} {
+            ![regexp {://([^/:]*:([^/]*@|\d+(/|$))|.*/\.)} $word] && \
+            ![urlisignored $word]} {
           set last $unixtime
           # enable https if supported
           if {$httpsSupport} {
@@ -231,6 +237,15 @@ namespace eval UrlTitle {
     return $title
   }
 
+  proc urlisignored {word} {
+    variable urlignore
+    foreach url $urlignore {
+      if {[regexp $url $word]} {
+        return 1
+      }
+    }
+    return 0
+  }
 
   putlog "Initialized Url Title Grabber v$scriptVersion"
 }
