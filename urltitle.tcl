@@ -6,6 +6,7 @@
 # Detects URL from IRC channels and prints out the title
 #
 # Version Log:
+# 0.12     Added a list of URL to ignore as regex (thanks to astrorigin on github for the pull request)
 # 0.11     Updated regex parser to only parse titles inside <head> tags
 #          Added HTTP error status logging
 # 0.10     Fixed XPath parsing error and added regex fallback if XPath fails
@@ -61,7 +62,7 @@ namespace eval UrlTitle {
 
   # INTERNAL
   variable last 1              ;# Internal variable, stores time of last eggdrop use, don't change..
-  variable scriptVersion 0.11
+  variable scriptVersion 0.12
 
   # PACKAGES
   package require http         ;# You need the http package..
