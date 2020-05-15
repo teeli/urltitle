@@ -100,9 +100,25 @@ namespace eval UrlTitle {
     }
   }
 
-  proc handler {nick host user chan text} {
+  proc getTitle {url} {
     variable httpsSupport
     variable htmlSupport
+    # enable https if supported
+    if {$httpsSupport} {
+      ::http::register https 443 [list UrlTitle::socket]
+    }
+    set title [UrlTitle::parse $url]
+    if {$htmlSupport} {
+      set title [::htmlparse::mapEscapes $title]
+    }
+    # unregister https if supported
+    if {$httpsSupport} {
+      ::http::unregister https
+    }
+    return $title
+  }
+
+  proc handler {nick host user chan text} {
     variable delay
     variable last
     variable ignore
@@ -114,18 +130,7 @@ namespace eval UrlTitle {
             ![regexp {://([^/:]*:([^/]*@|\d+(/|$))|.*/\.)} $word] && \
             ![urlisignored $word]} {
           set last $unixtime
-          # enable https if supported
-          if {$httpsSupport} {
-            ::http::register https 443 [list UrlTitle::socket]
-          }
-          set urtitle [UrlTitle::parse $word]
-          if {$htmlSupport} {
-            set urtitle [::htmlparse::mapEscapes $urtitle]
-          }
-          # unregister https if supported
-          if {$httpsSupport} {
-            ::http::unregister https
-          }
+          set urtitle [UrlTitle::getTitle $word]
           if {$urtitle eq ""} {
             break
           }
